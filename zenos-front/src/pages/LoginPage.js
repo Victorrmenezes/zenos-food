@@ -1,0 +1,38 @@
+import React from 'react';
+import '../pages/LoginPage.css';
+import LoginForm from '../components/LoginForm';
+
+function LoginPage() {
+  return (
+    <div className="auth-page">
+      <div className="auth-hero" aria-hidden="true">
+        <div className="hero-overlay">
+          <div className="hero-content">
+            <h1>Zenos Food</h1>
+            <p>
+              Aqui você encontra o seu próximo restaurante favorito!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="auth-panel">
+        <div className="auth-container">
+
+          <h2 className="auth-title">Sign in</h2>
+
+          <div className="socials">
+            <button className="btn social google" type="button">Continue com Google</button>
+            <button className="btn social twitter" type="button">Continue com Facebook</button>
+          </div>
+
+          <div className="divider"><span>OR</span></div>
+
+          <LoginForm redirectUrl="/" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default LoginPage;
