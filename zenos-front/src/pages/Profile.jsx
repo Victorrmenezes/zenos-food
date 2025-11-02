@@ -9,11 +9,13 @@ function Profile() {
 
   if (!user) {
     return (
+      <BasePage>
       <div className="profile-page">
         <div className="profile-card">
           <p className="profile-empty">You are not signed in.</p>
         </div>
       </div>
+      </BasePage>
     );
   }
 

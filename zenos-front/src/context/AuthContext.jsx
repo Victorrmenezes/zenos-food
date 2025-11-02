@@ -30,8 +30,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (localStorage.getItem("access")) {
       fetchCurrentUser();
-    } else {
-      window.location.href = "/login";
     }
 
   }, []);

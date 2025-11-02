@@ -8,41 +8,34 @@ function NavBar({ onToggleNav, isNavVisible }) {
 
   return (
     <nav className="navbar">
-      <div className="navbar-brand">
-        <button 
-          className="toggle-button" 
-          onClick={onToggleNav}
-          aria-label="Toggle navigation menu"
-        >
-          {isNavVisible ? '✕' : '☰'}
-        </button>
-        <Link to="/" className="navbar-logo">
-          Zenos Food
-        </Link>
+      <div className="navbar-logo-group">
+        <Link to="/" className="navbar-logo">Zenos</Link>
       </div>
-
       <div className="navbar-search">
         <input
           type="search"
           placeholder="Buscar restaurantes..."
           className="search-input"
-        />
+        /></div>
+      <div className="navbar-menu-group">
+        <Link to="/" className="navbar-menu-item">HOME</Link>
+        <Link to="/catalog" className="navbar-menu-item">CATALOG</Link>
+        <Link to="/contacts" className="navbar-menu-item">CONTACTS</Link>
       </div>
-
-      <div className="navbar-menu">
-        {user ? (
+      <div className="navbar-auth-group">
+        {!user ? (
           <>
-            <Link to="/profile" className="navbar-item">
-              {user.name || user.email || 'Perfil'}
+            <Link to="/login" className="navbar-menu-item btn-link">SIGN IN</Link>
+              </>
+        ) : (
+          <>
+            <Link to="/profile" className="navbar-menu-item">
+              {user.username || 'Perfil'}
             </Link>
-            <button onClick={handleLogout} className="navbar-item btn-link">
+            <button onClick={handleLogout} className="navbar-menu-item btn-link">
               Sair
             </button>
           </>
-        ) : (
-          <Link to="/login" className="navbar-item">
-            Entrar
-          </Link>
         )}
       </div>
     </nav>

@@ -1,0 +1,59 @@
+.map-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  padding: 8px;
+}
+
+/* Custom price marker styling */
+.custom-price-marker {
+  background: none;
+  border: none;
+}
+
+.price-marker {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #222;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap;
+}
+
+/* Ensure the map container has proper dimensions */
+.leaflet-container {
+  width: 100%;
+  height: 500px;
+  border-radius: 16px;
+  z-index: 1;
+}
+
+/* Zoom controls styling */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  background: white !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 16px !important;
+}
+
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+  background: #f8f8f8 !important;
+  color: #000 !important;
+}
