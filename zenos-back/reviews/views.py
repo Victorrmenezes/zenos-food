@@ -39,28 +39,52 @@ class UserPublicSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'first_name', 'last_name')
 
 
+from django.contrib.contenttypes.models import ContentType
+
 class ReviewSerializer(serializers.ModelSerializer):
     user = UserPublicSerializer(read_only=True)
-    establishment = EstablishmentSerializer(read_only=True)
-    establishment_id = serializers.PrimaryKeyRelatedField(queryset=Establishment.objects.all(), source='establishment', write_only=True)
+    content_type = serializers.CharField(write_only=True)
+    object_id = serializers.IntegerField(write_only=True)
+
+    # For read-only, show reviewed object type and id
+    reviewed_type = serializers.SerializerMethodField(read_only=True)
+    reviewed_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Review
-        fields = ('id', 'user', 'establishment', 'establishment_id', 'rating', 'comment', 'created_at')
+        fields = ('id', 'user', 'content_type', 'object_id', 'reviewed_type', 'reviewed_id', 'rating', 'comment', 'created_at')
+
+    def get_reviewed_type(self, obj):
+        return obj.content_type.model if obj.content_type else None
+
+    def get_reviewed_id(self, obj):
+        return obj.object_id
 
     def validate_rating(self, value):
         if not (1 <= value <= 5):
             raise serializers.ValidationError('Rating must be between 1 and 5')
         return value
 
+    def validate(self, attrs):
+        # Validate content_type and object_id
+        model_label = attrs.get('content_type')
+        object_id = attrs.get('object_id')
+        try:
+            content_type = ContentType.objects.get(model=model_label)
+        except ContentType.DoesNotExist:
+            raise serializers.ValidationError({'content_type': 'Invalid content type'})
+        model_class = content_type.model_class()
+        if not model_class.objects.filter(pk=object_id).exists():
+            raise serializers.ValidationError({'object_id': 'Object does not exist'})
+        attrs['content_type'] = content_type
+        return attrs
+
     def create(self, validated_data):
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         if user is None or not user.is_authenticated:
             raise serializers.ValidationError('Authentication credentials were not provided')
-
-        establishment = validated_data.pop('establishment')
-        review = Review.objects.create(user=user, establishment=establishment, **validated_data)
+        review = Review.objects.create(user=user, **validated_data)
         return review
 
 
@@ -93,9 +117,9 @@ def reviews_list(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_review(request):
-    """Create a new Review for the authenticated user.
-
-    Expected payload: { "establishment_id": <int>, "rating": <1-5>, "comment": "..." }
+    """
+    Create a new Review for the authenticated user.
+    Expected payload: { "content_type": "establishment"|"product", "object_id": <int>, "rating": <1-5>, "comment": "..." }
     """
     serializer = ReviewSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
@@ -121,3 +145,57 @@ def add_establishment(request):
                                   description = request.data.get('description'))
     establishment.save()
     return Response(EstablishmentSerializer(establishment).data, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_products(request):
+    """
+    Add multiple products in one request.
+    Expected payload:
+    {
+        "products": [
+            {
+                "establishment": <int>,  # establishment id
+                "name": "...", "description": "...", "price": <float>
+            },
+            ...
+        ]
+    }
+    """
+    products_data = request.data.get('products', [])
+
+    if not products_data:
+        return Response({'detail': 'Products are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    created_products = []
+    errors = []
+
+    for prod in products_data:
+        establishment_id = prod.get('establishment')
+        name = prod.get('name')
+        if not establishment_id or not name:
+            errors.append({'product': prod, 'error': 'Establishment and name are required.'})
+            continue
+        try:
+            establishment = Establishment.objects.get(pk=establishment_id)
+        except Establishment.DoesNotExist:
+            errors.append({'product': prod, 'error': 'Establishment not found.'})
+            continue
+        product = establishment.products.create(
+            name=name,
+            description=prod.get('description', ''),
+            price=prod.get('price')
+        )
+        created_products.append(product)
+
+    # Simple serializer for response
+    class ProductSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = created_products[0].__class__ if created_products else None
+            fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
+
+    response_data = {
+        'created': ProductSerializer(created_products, many=True).data if created_products else [],
+        'errors': errors
+    }
+    return Response(response_data, status=status.HTTP_201_CREATED if created_products else status.HTTP_400_BAD_REQUEST)

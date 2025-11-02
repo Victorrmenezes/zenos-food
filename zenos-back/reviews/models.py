@@ -3,6 +3,30 @@ from django.contrib.auth.models import User
 from django.db.models import Avg
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+
+class Product(models.Model):
+    """
+    Represents a product that can be reviewed and associated with establishments.
+    """
+    name = models.CharField(max_length=150, db_index=True)
+    description = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    establishment = models.ForeignKey('Establishment', on_delete=models.CASCADE, related_name='products')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-rating", "name"]
+
+    def __str__(self):
+        return f"{self.name}"
+
+    def update_rating(self):
+        average = self.reviews.aggregate(avg=Avg("rating"))["avg"] or 0.0
+        self.rating = round(average, 2)
+        self.save(update_fields=["rating"])
 
 
 class Category(models.Model):
@@ -63,26 +87,30 @@ class Establishment(models.Model):
 
 class Review(models.Model):
     """
-    Representa uma avaliação feita por um usuário para um estabelecimento.
+    Generic review model supporting reviews for establishments, products, or any object.
     """
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
-    establishment = models.ForeignKey(Establishment, on_delete=models.CASCADE, related_name="reviews")
     rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
     comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Generic relation fields
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     class Meta:
-        unique_together = ("user", "establishment", "created_at")  # Usuário só pode avaliar 1x cada estabelecimento
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["rating"]),
             models.Index(fields=["created_at"]),
+            models.Index(fields=["content_type", "object_id"]),
         ]
 
     def __str__(self):
-        return f"Review by {self.user.username} on {self.establishment.name}"
+        return f"Review by {self.user.username} on {self.content_object}" 
 
     def short_comment(self):
         return (self.comment[:50] + "...") if self.comment and len(self.comment) > 50 else self.comment
@@ -91,8 +119,12 @@ class Review(models.Model):
 # --- SIGNALS ---
 
 @receiver([post_save, post_delete], sender=Review)
-def update_establishment_rating(sender, instance, **kwargs):
+def update_reviewed_object_rating(sender, instance, **kwargs):
     """
-    Atualiza a média do estabelecimento sempre que uma Review for criada, alterada ou removida.
+    Atualiza a média do objeto avaliado (estabelecimento, produto, etc) sempre que uma Review for criada, alterada ou removida.
     """
-    instance.establishment.update_avg_rating()
+    content_object = instance.content_object
+    if hasattr(content_object, 'update_avg_rating'):
+        content_object.update_avg_rating()
+    elif hasattr(content_object, 'update_rating'):
+        content_object.update_rating()
