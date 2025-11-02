@@ -19,7 +19,7 @@ function NavBar({ onToggleNav, isNavVisible }) {
         /></div>
       <div className="navbar-menu-group">
         <Link to="/" className="navbar-menu-item">HOME</Link>
-        <Link to="/catalog" className="navbar-menu-item">CATALOG</Link>
+        <Link to="/products" className="navbar-menu-item">MENU</Link>
         <Link to="/contacts" className="navbar-menu-item">CONTACTS</Link>
       </div>
       <div className="navbar-auth-group">

@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './DetailedItem.css';
 
 function DetailedItem({ establishment }) {
+    const navigate = useNavigate();
     const imageUrl = `https://picsum.photos/id/${establishment?.id}/500/500/?`;
 
     return (
@@ -40,6 +42,15 @@ function DetailedItem({ establishment }) {
                         <p>{establishment.description}</p>
                     </div>
                 )}
+                <div className="detailed-item-actions">
+                    <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => establishment?.id && navigate(`/products?establishment_id=${establishment.id}`)}
+                    >
+                        Ver produtos
+                    </button>
+                </div>
             </div>
         </div>
     );

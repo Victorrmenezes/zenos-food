@@ -1,7 +1,6 @@
 import React from 'react';
 import BasePage from './BasePage';
-import List from '../components/List';
-import MapContainer from '../components/MapContainer';
+import EstablishmentList from '../components/EstablishmentList';
 import './HomePage.css';
 import DetailedItem from '../components/DetailedItem';
 
@@ -11,7 +10,7 @@ function HomePage() {
     <BasePage>
       <div className="home-page">
         <div className="list-section">
-          <List onSelect={setSelectedEstablishment} />
+          <EstablishmentList onSelect={setSelectedEstablishment} />
         </div>
         <div className="map-section">
           {selectedEstablishment && <DetailedItem establishment={selectedEstablishment} />}

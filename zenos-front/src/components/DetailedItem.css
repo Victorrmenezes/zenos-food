@@ -76,6 +76,10 @@
   border: 1.5px solid #b3d1f3;
 }
 
+.detailed-item-actions {
+  margin-top: 16px;
+}
+
 .rating-value {
   background: #eaf4ff;
   color: #143d6b;
