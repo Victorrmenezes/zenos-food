@@ -28,7 +28,7 @@ function LoginPage() {
 
           <div className="divider"><span>OR</span></div>
 
-          <LoginForm redirectUrl="/" />
+          <LoginForm redirectUrl="/profile" />
         </div>
       </div>
     </div>
