@@ -1,6 +1,7 @@
 import React from 'react';
 import '../pages/Profile.css';
 import { useAuth } from '../context/AuthContext';
+import BasePage from './BasePage';
 
 function Profile() {
   const auth = useAuth();
@@ -19,12 +20,14 @@ function Profile() {
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.name || 'User';
 
   return (
+    <BasePage>
     <div className="profile-page">
       <div className="profile-card">
         <h2 className="profile-name">{displayName}</h2>
         <p className="profile-email">{user.email || '—'}</p>
       </div>
     </div>
+    </BasePage>
   );
 }
 
