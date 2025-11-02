@@ -1,64 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ListItem from './ListItem';
-import './List.css';
+import { getEstablishments } from '../api/reviews';
 
-const contacts = [
-  {
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-    name: 'JENSON DELANEY',
-    email: 'jenson.delaney@mail.com',
-    unread: 3,
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-    name: 'AMAYA COFFEY',
-    email: 'amaya.coffey@mail.com',
-    unread: 1,
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-    name: 'HABIB JOYCE',
-    email: 'habib.joyce@mail.com',
-    unread: 5,
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
-    name: 'LILLY-ANN ROCHE',
-    email: 'lilly-ann.roche@mail.com',
-    unread: 8,
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/women/5.jpg',
-    name: 'GIULIA HAWORTH',
-    email: 'giulia.haworth@mail.com',
-    unread: 3,
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/men/6.jpg',
-    name: 'DAWSON HUMPHREY',
-    email: 'dawson.humphrey@mail.com',
-    unread: 2,
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/men/7.jpg',
-    name: 'REILLY MCCULLOUGH',
-    email: 'reilly.mccullough@mail.com',
-    unread: 3,
-  },
-];
+let inMemoryEstablishments = [];
 
-function List() {
-  const totalUnread = contacts.reduce((sum, c) => sum + c.unread, 0);
+function readLocalCache() {
+  try {
+    const cached = localStorage.getItem('establishments');
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalCache(data) {
+  try {
+    localStorage.setItem('establishments', JSON.stringify(data));
+  } catch {}
+}
+
+function List({ onSelect }) {
+  const [establishments, setEstablishments] = useState(() => inMemoryEstablishments || readLocalCache() || []);
+  const [loading, setLoading] = useState(!establishments || establishments.length === 0);
+  const [error, setError] = useState(null);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    if (inMemoryEstablishments && inMemoryEstablishments.length > 0) {
+      setLoading(false);
+      setEstablishments(inMemoryEstablishments);
+      return () => (mounted.current = false);
+    }
+    const cached = readLocalCache();
+    if (cached && cached.length > 0) {
+      inMemoryEstablishments = cached;
+      if (mounted.current) {
+        setEstablishments(cached);
+        setLoading(false);
+      }
+    }
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const resp = await getEstablishments();
+        const data = resp.data || [];
+        inMemoryEstablishments = data;
+        writeLocalCache(data);
+        if (mounted.current) {
+          setEstablishments(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch establishments', err);
+        if (mounted.current) {
+          setError('Failed to load establishments');
+          setLoading(false);
+        }
+      }
+    };
+    fetchData();
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   return (
     <div className="list-container">
       <div className="list-header">Restaurantes</div>
+      {loading && <div className="list-loading">Carregando estabelecimentos...</div>}
+      {error && <div className="list-error">{error}</div>}
       <div className="list-items">
-        {contacts.map((contact, idx) => (
-          <ListItem key={idx} {...contact} />
-        ))}
+        {establishments && establishments.length > 0 ? (
+          establishments.map((est, idx) => (
+            <ListItem key={est.id || idx} {...est} onClick={() => onSelect && onSelect(est)} />
+          ))
+        ) : (
+          !loading && <div className="list-empty">Nenhum estabelecimento encontrado.</div>
+        )}
       </div>
-      <div className="list-footer">{totalUnread} unread messages in total</div>
     </div>
   );
 }
