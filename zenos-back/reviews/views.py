@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status, serializers
 
 from django.contrib.auth.models import User
-from .models import Establishment, Review, Category
+from .models import Establishment, Review, Category, Product
 
 
 @api_view(['GET'])
@@ -218,18 +218,9 @@ def get_products(request):
 
     products_qs = establishment.products.all()
 
-    # Local serializer for read-only product listing
-    try:
-        from .models import Product  # prefer explicit model if available
-        class ProductReadSerializer(serializers.ModelSerializer):
-            class Meta:
-                model = Product
-                fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
-    except Exception:
-        ProductModel = products_qs.model  # fallback if Product import not available
-        class ProductReadSerializer(serializers.ModelSerializer):
-            class Meta:
-                model = ProductModel
-                fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
+    class ProductReadSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Product
+            fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
 
     return Response(ProductReadSerializer(products_qs, many=True).data, status=status.HTTP_200_OK)
