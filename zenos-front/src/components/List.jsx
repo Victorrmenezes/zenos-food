@@ -68,7 +68,9 @@ function List({ onSelect }) {
 
   return (
     <div className="list-container">
-      <div className="list-header">Restaurantes</div>
+      <div className="navbar-menu-item">
+        
+      </div>
       {loading && <div className="list-loading">Carregando estabelecimentos...</div>}
       {error && <div className="list-error">{error}</div>}
       <div className="list-items">

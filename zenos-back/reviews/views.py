@@ -102,3 +102,22 @@ def add_review(request):
         review = serializer.save()
         return Response(ReviewSerializer(review).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_establishment(request):
+    """Create a new Establishment for the authenticated user.
+
+    Expected payload: { "name": "...", "category": <int>, "address": "...", "city": "...", "latitude": <float>, "longitude": <float>, "description": "..." }
+    """
+    if Establishment.objects.filter(name=request.data.get('name')).exists():
+        return Response({'detail': 'Establishment with this name already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+    establishment = Establishment(name =request.data.get('name'),
+                                  category = Category.objects.get(id=request.data.get('category')),
+                                  address = request.data.get('address'),
+                                  city = request.data.get('city'),
+                                  latitude = request.data.get('latitude'),
+                                  longitude = request.data.get('longitude'),
+                                  description = request.data.get('description'))
+    establishment.save()
+    return Response(EstablishmentSerializer(establishment).data, status=status.HTTP_201_CREATED)
