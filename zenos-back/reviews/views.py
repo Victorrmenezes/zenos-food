@@ -182,7 +182,7 @@ def add_products(request):
             errors.append({'product': prod, 'error': 'Establishment not found.'})
             continue
         product = establishment.products.create(
-            name=name,
+                name=name,
             description=prod.get('description', ''),
             price=prod.get('price')
         )
@@ -193,9 +193,43 @@ def add_products(request):
         class Meta:
             model = created_products[0].__class__ if created_products else None
             fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
-
     response_data = {
         'created': ProductSerializer(created_products, many=True).data if created_products else [],
         'errors': errors
     }
     return Response(response_data, status=status.HTTP_201_CREATED if created_products else status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_products(request):
+    """
+    List all products for a given establishment_id
+    Expected payload :
+    {}
+    """
+    establishment_id = request.query_params.get('establishment_id')
+    if not establishment_id:
+        return Response({'detail': 'establishment_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        establishment = Establishment.objects.get(pk=establishment_id)
+    except Establishment.DoesNotExist:
+        return Response({'detail': 'Establishment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    products_qs = establishment.products.all()
+
+    # Local serializer for read-only product listing
+    try:
+        from .models import Product  # prefer explicit model if available
+        class ProductReadSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = Product
+                fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
+    except Exception:
+        ProductModel = products_qs.model  # fallback if Product import not available
+        class ProductReadSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ProductModel
+                fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
+
+    return Response(ProductReadSerializer(products_qs, many=True).data, status=status.HTTP_200_OK)
