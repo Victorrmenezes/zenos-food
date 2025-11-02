@@ -209,14 +209,13 @@ def get_products(request):
     """
     establishment_id = request.query_params.get('establishment_id')
     if not establishment_id:
-        return Response({'detail': 'establishment_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        establishment = Establishment.objects.get(pk=establishment_id)
-    except Establishment.DoesNotExist:
-        return Response({'detail': 'Establishment not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    products_qs = establishment.products.all()
+        products_qs = Product.objects.all()
+    else:
+        try:
+            establishment = Establishment.objects.get(pk=establishment_id)
+        except Establishment.DoesNotExist:
+            return Response({'detail': 'Establishment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        products_qs = establishment.products.all()
 
     class ProductReadSerializer(serializers.ModelSerializer):
         class Meta:

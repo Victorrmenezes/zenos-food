@@ -15,3 +15,6 @@ export const addReview = (data) => api.post('/reviews/', data);
 
 // Register (not implemented in backend)
 export const register = (data) => api.post('/register/', data);
+
+export const getProducts = (establishment_id) => api.get('/reviews/products/', { params: { establishment_id } });
+
