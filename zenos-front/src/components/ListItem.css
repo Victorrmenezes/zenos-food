@@ -73,6 +73,10 @@
   font-size: 0.95rem;
 }
 
+.list-item-actions {
+  margin-top: 8px;
+}
+
 
 @media (max-width: 800px) {
   .list-item {

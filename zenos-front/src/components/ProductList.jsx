@@ -24,7 +24,7 @@ function writeLocalProducts(data) {
  * - onSelect?: function(product)
  * If fetchProducts isn't provided, it will only render products from localStorage (if any).
  */
-function ProductList({ fetchProducts, onSelect }) {
+function ProductList({ fetchProducts, onSelect, onAdd }) {
   const [products, setProducts] = useState(() => readLocalProducts() || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -58,13 +58,17 @@ function ProductList({ fetchProducts, onSelect }) {
 
   return (
     <List
-      title=""
       items={products}
       loading={loading}
       error={error}
       emptyText="Nenhum produto encontrado."
       renderItem={(p, idx) => (
-        <ProductListItem key={p.id || idx} {...p} onClick={() => onSelect && onSelect(p)} />
+        <ProductListItem
+          key={p.id || idx}
+          {...p}
+          onClick={() => onSelect && onSelect(p)}
+          onAdd={() => onAdd && onAdd(p)}
+        />
       )}
     />
   );
