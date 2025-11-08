@@ -25,7 +25,6 @@ function ListItem({ imageUrl, title, rating, meta, address, description, onClick
         </div>
         {meta && <div className="list-item-meta">{meta}</div>}
         {address && <div className="list-item-address">{address}</div>}
-        {description && description.length > 0 && <div className="list-item-desc">{description}</div>}
       </div>
     </div>
   );
