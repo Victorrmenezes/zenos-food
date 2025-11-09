@@ -5,6 +5,7 @@ from rest_framework import status, serializers
 
 from django.contrib.auth.models import User
 from .models import Establishment, Review, Category, Product
+from .api import send_dicts_email
 
 
 @api_view(['GET'])
@@ -223,3 +224,62 @@ def get_products(request):
             fields = ('id', 'name', 'description', 'price', 'rating', 'created_at')
 
     return Response(ProductReadSerializer(products_qs, many=True).data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def buy_products(request):
+    """
+    Simulate a purchase of products.
+    Expected payload:
+    {
+        "establishment_id": <int>,
+        "items": [
+            { "id": <product_id>, "qty": <number> , "price": <number> (optional) },
+            ...
+        ]
+    }
+    """
+    establishment_id = request.data.get('establishment_id')
+    items = request.data.get('items', [])
+
+    if not establishment_id or not items:
+        return Response({'detail': 'Establishment ID and items are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        establishment = Establishment.objects.get(pk=establishment_id)
+    except Establishment.DoesNotExist:
+        return Response({'detail': 'Establishment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    purchased_items = []
+    errors = []
+
+    for item in items:
+        product_id = item.get('id')
+        qty = item.get('qty', 1)
+        if not product_id or qty <= 0:
+            errors.append({'item': item, 'error': 'Product ID and positive quantity are required.'})
+            continue
+        try:
+            product = establishment.products.get(pk=product_id)
+        except Product.DoesNotExist:
+            errors.append({'item': item, 'error': 'Product not found in this establishment.'})
+            continue
+        purchased_items.append({
+            'product_id': product.id,
+            'name': product.name,
+            'quantity': qty,
+            'unit_price': float(product.price) if product.price else None,
+            'total_price': float(product.price) * qty if product.price else None
+        })
+
+    resp = send_dicts_email(
+        items=purchased_items,
+        to_email=request.user.email,    
+        subject=f'Purchase Confirmation from {establishment.name}'
+    )
+
+    response_data = {
+        'purchased_items': purchased_items,
+        'errors': errors
+    }
+    return Response(response_data, status=status.HTTP_200_OK if purchased_items else status.HTTP_400_BAD_REQUEST)

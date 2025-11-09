@@ -12,17 +12,26 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import os
+
+try:
+    from dotenv import load_dotenv  # optional, only if python-dotenv installed
+    load_dotenv()
+except Exception:
+    pass
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b&4-d3fum-j6s4+y_(p5uwkqkg_h()u1)2-v%ame^3k-pern-k'
-
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -144,3 +153,28 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- Email / SMTP configuration (loaded from environment) ---
+
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('SMTP_HOST', os.getenv('EMAIL_HOST', 'localhost'))
+EMAIL_PORT = int(os.getenv('SMTP_PORT', os.getenv('EMAIL_PORT', '587')))
+EMAIL_HOST_USER = os.getenv('SMTP_USER', os.getenv('EMAIL_HOST_USER', ''))
+EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASS', os.getenv('EMAIL_HOST_PASSWORD', ''))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '1') in ['1', 'true', 'True']
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', '0') in ['1', 'true', 'True']
+
+# If both TLS and SSL are accidentally enabled, prefer TLS (unset SSL)
+if EMAIL_USE_TLS and EMAIL_USE_SSL:
+    EMAIL_USE_SSL = False
+
+DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@example.com')
+
+# Optional: fail loudly in dev if critical vars missing
+if DEBUG:
+    missing_email = []
+    for key, val in {'SMTP_HOST': EMAIL_HOST, 'SMTP_USER': EMAIL_HOST_USER, 'SMTP_PASS': EMAIL_HOST_PASSWORD}.items():
+        if not val:
+            missing_email.append(key)
+    if missing_email:
+        print('[EMAIL WARNING] Missing SMTP env vars:', ', '.join(missing_email))
