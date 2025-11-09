@@ -14,7 +14,7 @@ function ProductListItem({ id, name, description, price, rating, establishment, 
       rating={rating}
       meta={meta}
       description={description}
-      actions={<button type="button" className="btn-link" onClick={onAdd}>Adicionar ao carrinho</button>}
+      actions={<button type="button" className="btn-link" onClick={(e) => { e.stopPropagation(); onAdd(); }}>Adicionar ao carrinho</button>}
       onClick={onClick}
     />
   );
