@@ -48,13 +48,37 @@ function ProductsPage() {
 
   const total = basket.reduce((sum, p) => sum + ((Number(p.price) || 0) * (p.qty || 1)), 0);
 
+  const [checkoutLoading, setCheckoutLoading] = React.useState(false);
+
+  const handleCheckout = async () => {
+    if (basket.length === 0) return;
+    setCheckoutLoading(true);
+    try {
+      // Prepare payload: group by product id and send qty
+      const items = basket.map(p => ({ id: p.id, qty: p.qty || 1, price: p.price }));
+      const payload = { establishment_id: establishmentId || null, items };
+      // dynamic import of helper
+      const { buyProducts } = await import('../api/reviews');
+      const resp = await buyProducts(payload);
+      // Expect backend to respond with success flag or order id
+      // Clear basket on success
+      persistBasket([]);
+      alert('Compra realizada com sucesso.');
+    } catch (err) {
+      console.error('Checkout failed', err);
+      alert('Falha ao finalizar a compra. Tente novamente.');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <BasePage>
       <div className="products-layout" style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
         <div style={{ flex: 1 }}>
           <ProductList fetchProducts={fetcher} onAdd={addToBasket} />
         </div>
-  <div className="basket-panel" style={{ width: '340px', background: '#fff', borderRadius: '16px', boxShadow: '0 2px 8px rgba(20,61,107,0.08)', padding: '16px', border: '1.5px solid #eaf4ff', position: 'sticky', top: '80px' }}>
+        <div className="basket-panel" style={{ width: '340px', background: '#fff', borderRadius: '16px', boxShadow: '0 2px 8px rgba(20,61,107,0.08)', padding: '16px', border: '1.5px solid #eaf4ff', position: 'sticky', top: '80px' }}>
           <h2 style={{ margin: '0 0 12px', fontFamily: 'Georgia, serif', color: '#143d6b' }}>Carrinho</h2>
           {basket.length === 0 && <div style={{ color: '#143d6b', background: '#eaf4ff', padding: '12px', borderRadius: '12px' }}>Nenhum produto.</div>}
           {basket.map(item => (
@@ -70,7 +94,7 @@ function ProductsPage() {
           ))}
           <div style={{ marginTop: '8px', fontWeight: 600, color: '#143d6b' }}>Total: R$ {total.toFixed(2)}</div>
           {basket.length > 0 && (
-            <button type="button" className="btn-link" style={{ marginTop: '12px', width: '100%' }} onClick={() => alert('Checkout não implementado ainda.')}>Finalizar compra</button>
+            <button type="button" className="btn-link" style={{ marginTop: '12px', width: '100%' }} onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Processando...' : 'Finalizar compra'}</button>
           )}
         </div>
       </div>
