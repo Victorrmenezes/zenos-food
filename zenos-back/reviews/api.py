@@ -1,37 +1,40 @@
-import os
+from time import timezone
+from django.conf import settings
 from django.core.mail import send_mail
-from typing import List, Dict
 import logging
+from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
-def send_dicts_email(items: List[Dict], to_email: str, subject: str = "Data Summary") -> bool:
-    """
-    Send an email containing a formatted representation of a list of dictionaries.
-    SMTP settings are read from environment variables:
-      SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL
-    Returns True on success, False on failure.
-    """
-    if not isinstance(items, list) or not all(isinstance(d, dict) for d in items):
-        raise ValueError("items must be a list of dicts")
-    if not to_email:
-        raise ValueError("to_email required")
+def send_purchased_items(request, establishment, purchased_items):
+    grand_total = sum((item['total_price'] or 0) for item in purchased_items)
 
-    lines = []
-    for i, d in enumerate(items, start=1):
-        parts = [f"{k}={repr(v)}" for k, v in sorted(d.items())]
-        lines.append(f"Item {i}: " + ", ".join(parts))
-    body = "\n".join(lines) if lines else "No data."
+    # Render HTML template
+    context = {
+        'establishment': establishment,
+        'user': request.user,
+        'items': purchased_items,
+        'grand_total': grand_total,
+        'year': timezone.now().year,
+        'site_url': request.build_absolute_uri('/')
+    }
+    html_body = render_to_string('email/buy_template.html', context)
 
-    try:
-        sent = send_mail(
-            subject,
-            body,
-            os.getenv("FROM_EMAIL"),
-            [to_email]
+    # Fallback plain text body
+    plain_lines = [
+        f"{i+1}. {it['name']} x{it['quantity']} => R$ {it['total_price']:.2f}" if it['total_price'] else f"{i+1}. {it['name']} x{it['quantity']}" 
+        for i, it in enumerate(purchased_items)
+    ]
+    plain_text = ("Compra realizada em " + establishment.name + "\n" + "\n".join(plain_lines) + f"\nTotal: R$ {grand_total:.2f}") if purchased_items else "Nenhum item comprado."
+
+    email_sent = False
+    if purchased_items and request.user.email:
+        sent_count = send_mail(
+            subject=f'Purchase Confirmation from {establishment.name}',
+            message=plain_text,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            recipient_list=[request.user.email],
+            html_message=html_body
         )
-        logger.info("send_mail returned count=%s to=%s", sent, to_email)
-        return sent > 0
-    except Exception as e:
-        logger.exception("Failed to send email to %s: %s", to_email, e)
-        return False
+        email_sent = sent_count > 0
+    return email_sent

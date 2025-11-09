@@ -5,7 +5,7 @@ from rest_framework import status, serializers
 
 from django.contrib.auth.models import User
 from .models import Establishment, Review, Category, Product
-from .api import send_dicts_email
+from .api import send_purchased_items
 
 
 @api_view(['GET'])
@@ -267,19 +267,17 @@ def buy_products(request):
         purchased_items.append({
             'product_id': product.id,
             'name': product.name,
+            'description': product.description,
             'quantity': qty,
             'unit_price': float(product.price) if product.price else None,
             'total_price': float(product.price) * qty if product.price else None
         })
 
-    resp = send_dicts_email(
-        items=purchased_items,
-        to_email=request.user.email,    
-        subject=f'Purchase Confirmation from {establishment.name}'
-    )
+    email_sent = send_purchased_items(request, establishment, purchased_items)
 
     response_data = {
         'purchased_items': purchased_items,
-        'errors': errors
+        'errors': errors,
+        'email_sent': email_sent
     }
     return Response(response_data, status=status.HTTP_200_OK if purchased_items else status.HTTP_400_BAD_REQUEST)
