@@ -18,3 +18,7 @@ export const register = (data) => api.post('/register/', data);
 
 export const getProducts = (establishment_id) => api.get('/reviews/products/', { params: { establishment_id } });
 
+// Send a purchase request to the backend. Payload should be an object like:
+// { establishment_id: <id>, items: [ { id: <product_id>, qty: <number> , price?: <number> }, ... ] }
+export const buyProducts = (payload) => api.post('/reviews/products/buy/', payload);
+

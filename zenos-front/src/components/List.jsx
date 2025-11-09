@@ -13,11 +13,6 @@ import React from 'react';
 function List({ title = '', items = [], renderItem, loading = false, error = null, emptyText = 'Nenhum item encontrado.' }) {
   return (
     <div className="list-container">
-      {title ? (
-        <div className="list-header">
-          <span>{title}</span>
-        </div>
-      ) : null}
       {loading && <div className="list-loading">Carregando...</div>}
       {error && <div className="list-error">{error}</div>}
       <div className="list-items">

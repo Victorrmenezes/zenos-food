@@ -11,7 +11,6 @@ function EstablishmentListItem({ id, name, category, address, city, avg_rating, 
       rating={avg_rating}
       meta={meta}
       address={address}
-      description={description}
       onClick={onClick}
     />
   );

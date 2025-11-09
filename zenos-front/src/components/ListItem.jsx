@@ -12,7 +12,7 @@ import './ListItem.css';
  * - description?: string
  * - onClick?: () => void
  */
-function ListItem({ imageUrl, title, rating, meta, address, description, onClick }) {
+function ListItem({ imageUrl, title, rating, meta, address, description, actions, onClick }) {
   return (
     <div className="list-item" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       {imageUrl && <img src={imageUrl} alt={title} className="list-item-avatar" />}
@@ -25,6 +25,8 @@ function ListItem({ imageUrl, title, rating, meta, address, description, onClick
         </div>
         {meta && <div className="list-item-meta">{meta}</div>}
         {address && <div className="list-item-address">{address}</div>}
+        {description && <div className="list-item-desc">{description}</div>}
+        {actions && <div className="list-item-actions">{actions}</div>}
       </div>
     </div>
   );

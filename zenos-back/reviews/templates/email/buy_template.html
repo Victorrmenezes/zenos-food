@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Confirmação da Compra</title>
+	<style>
+		/* --- RESET / BASE --- */
+		body,table,td,p{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;}
+		body{background:#f5f9fc;color:#143d6b;-webkit-font-smoothing:antialiased;}
+		a{color:#143d6b;text-decoration:none;}
+		img{border:0;max-width:100%;height:auto;display:block;}
+		/* --- CONTAINER --- */
+		.wrapper{width:100%;background:#f5f9fc;padding:24px 0;} 
+		.container{max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;box-shadow:0 4px 16px rgba(20,61,107,.08);overflow:hidden;border:1px solid #eaf4ff;}  
+		/* --- HEADER --- */
+		.header{background:#143d6b;color:#fff;padding:32px 32px 28px;text-align:center;}
+		.header h1{margin:0;font-size:24px;font-weight:700;font-family:Georgia,serif;letter-spacing:.5px;}
+		.subhead{margin-top:8px;font-size:14px;font-weight:400;opacity:.85;}
+		/* --- SECTION --- */
+		.section{padding:28px 32px;}
+		.card{background:#eaf4ff;border:1px solid #b3d1f3;border-radius:12px;padding:20px;margin-bottom:20px;}
+		.card-title{font-size:16px;font-weight:600;margin:0 0 12px;color:#143d6b;font-family:Georgia,serif;}
+		/* --- ITEMS TABLE --- */
+		.items-table{width:100%;border-collapse:collapse;}
+		.items-table th{background:#143d6b;color:#fff;font-weight:600;font-size:13px;padding:10px;border-top-left-radius:8px;border-top-right-radius:8px;}
+		.items-table td{padding:12px 10px;font-size:14px;border-bottom:1px solid #eaf4ff;vertical-align:top;}
+		.items-table tr:last-child td{border-bottom:none;}
+		.qty-badge{background:#b3d1f3;color:#143d6b;font-weight:600;padding:4px 10px;border-radius:24px;font-size:12px;display:inline-block;}
+		.price{font-weight:600;color:#143d6b;}
+		.total-box{margin-top:24px;background:#fff;border:1px solid #b3d1f3;border-radius:12px;padding:16px;text-align:right;}
+		.total-label{font-size:14px;font-weight:500;color:#143d6b;margin-right:8px;}
+		.total-value{font-size:20px;font-weight:700;color:#143d6b;font-family:Georgia,serif;}
+		/* --- FOOTER --- */
+		.footer{background:#ffffff;padding:24px 32px 40px;text-align:center;font-size:12px;color:#57789c;}
+		.footer a{color:#143d6b;font-weight:600;}
+		/* --- RESPONSIVE --- */
+		@media (max-width:520px){
+			.section,.header{padding:24px 20px;}
+			.items-table th,.items-table td{font-size:12px;padding:8px 6px;}
+			.total-value{font-size:18px;}
+		}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+		<div class="container">
+			<!-- HEADER -->
+			<div class="header">
+				<h1>Confirmação da Compra</h1>
+				<p class="subhead">Obrigado pela sua compra em <strong>{{ establishment.name }}</strong>.</p>
+			</div>
+
+			<!-- BUYER INFO -->
+			<div class="section">
+				<div class="card">
+					<h2 class="card-title">Dados do Cliente</h2>
+					<p style="margin:0 0 6px"><strong>Nome:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+					<p style="margin:0 0 6px"><strong>Usuário:</strong> {{ user.username }}</p>
+					<p style="margin:0"><strong>Email:</strong> {{ user.email }}</p>
+				</div>
+
+				<!-- ITEMS -->
+				<div class="card" style="background:#fff;">
+					<h2 class="card-title">Itens da Compra</h2>
+					<table class="items-table" role="presentation">
+						<thead>
+							<tr>
+								<th style="text-align:left;">Produto</th>
+								<th style="text-align:center;">Qtd</th>
+								<th style="text-align:right;">Unitário</th>
+								<th style="text-align:right;">Total</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for item in items %}
+							<tr>
+								<td style="width:45%;">
+									<div style="font-weight:600;color:#143d6b;">{{ item.name }}</div>
+									{% if item.description %}<div style="font-size:12px;color:#57789c;margin-top:2px;">{{ item.description }}</div>{% endif %}
+								</td>
+								<td style="text-align:center;">
+									<span class="qty-badge">{{ item.quantity }}</span>
+								</td>
+								<td style="text-align:right;" class="price">
+									{% if item.unit_price %}R$ {{ item.unit_price|floatformat:2 }}{% else %}-{% endif %}
+								</td>
+								<td style="text-align:right;" class="price">
+									{% if item.total_price %}R$ {{ item.total_price|floatformat:2 }}{% else %}-{% endif %}
+								</td>
+							</tr>
+							{% empty %}
+							<tr>
+								<td colspan="4" style="text-align:center;color:#57789c;padding:20px;">Nenhum item encontrado.</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					<div class="total-box">
+						<span class="total-label">Total Geral:</span>
+						<span class="total-value">R$ {{ grand_total|floatformat:2 }}</span>
+					</div>
+				</div>
+
+				<!-- MESSAGE -->
+				<div class="card">
+					<h2 class="card-title">Status</h2>
+					<p style="margin:0;font-size:14px;line-height:1.5;color:#143d6b;">
+						Seu pedido foi processado com sucesso. Caso tenha dúvidas, responda este e-mail ou acesse o painel em nosso site.
+					</p>
+				</div>
+			</div>
+
+			<!-- FOOTER -->
+			<div class="footer">
+				<p style="margin:0 0 6px;">&copy; {{ year }} Zenos Food. Todos os direitos reservados.</p>
+				<p style="margin:0;">Esta é uma mensagem automática – não responda se não for necessário.</p>
+				<p style="margin:12px 0 0;">
+					<a href="{{ site_url }}" target="_blank">Visitar o site</a>
+				</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
