@@ -234,7 +234,7 @@ def buy_products(request):
     {
         "establishment_id": <int>,
         "items": [
-            { "id": <product_id>, "qty": <number> , "price": <number> (optional) },
+            { "id": <product_id>, "qty": <number> },
             ...
         ]
     }
